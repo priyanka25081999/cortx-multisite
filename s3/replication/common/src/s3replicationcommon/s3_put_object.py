@@ -63,6 +63,10 @@ class S3AsyncPutObject:
         """Returns ETag for object."""
         return self._response_headers["ETag"].strip("\"")
 
+    def get_content_length(self):
+        """Returns content length of object."""
+        return int(self._response_headers["Content-Length"])
+
     # data_reader is object with fetch method that can yeild data
     async def send(self, data_reader, transfer_size):
         self._state = S3RequestState.RUNNING
@@ -114,6 +118,11 @@ class S3AsyncPutObject:
                         fmt_reqid_log(self._request_id) +
                         'PUT Object completed with http status: {}'.format(
                             resp.status))
+
+                    self._logger.info(
+                        fmt_reqid_log(self._request_id) +
+                        'PUT response header: {}'.format(
+                            self._response_headers))
 
                     # Validate if upload object etag matches.
                     if self.get_etag() != data_reader.get_etag():

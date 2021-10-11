@@ -90,6 +90,31 @@ class ObjectReplicator:
             else:
                 await observer.notify(JobEvents.COMPLETED, self._job_id)
 
+        # check the job state
+        if JobEvents.COMPLETED:
+            source_etag = self._object_reader.get_etag()
+            target_etag = self._object_writer.get_etag()
+
+            _logger.info("Source md5 {} and Target md5 {}".format(source_etag, target_etag))
+
+            # check md5 of source and replicated objects at target
+            if source_etag == target_etag:
+                _logger.info("MD5 matched of source and target for job_id {}".format(self._job_id))
+            else:
+                _logger.error("MD5 not matched for job_id {}".format(self._job_id))
+
+            # check content length of source and target objects [system-defined metadata]
+            source_content_length = self._object_reader.get_content_length()
+            target_content_length = self._object_writer.get_content_length()
+
+            _logger.info("Source content length {} and Target content length {}".format(
+                                        source_content_length, target_content_length))
+
+            if source_content_length == target_content_length:
+                _logger.info("Content length matched for job_id {}".format(self._job_id))
+            else:
+                _logger.error("Content length not matched for job_id {}".format(self._job_id))
+
     def pause(self):
         """Pause the running object tranfer."""
         pass  # XXX
