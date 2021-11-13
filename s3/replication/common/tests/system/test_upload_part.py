@@ -23,7 +23,8 @@ import os
 import sys
 from config import Config
 from s3replicationcommon.log import setup_logger
-from s3replicationcommon.s3_head_object import S3AsyncHeadObject
+from object_generator_multipart_upload import MultipartObjectDataGenerator
+from s3replicationcommon.s3_upload_part import S3AsyncUploadPart
 from s3replicationcommon.s3_site import S3Site
 from s3replicationcommon.s3_session import S3Session
 
@@ -50,19 +51,22 @@ async def main():
     bucket_name = config.source_bucket_name
     request_id = "dummy-request-id"
 
-    head_obj = S3AsyncHeadObject(session, request_id,
-                                 bucket_name, object_name,
-                                 None, None)
-    await head_obj.get()
+    upload_id = "9091df60-7e67-4e50-b2b6-7bdcf6e949a4"
 
-    # Validate if content length matches to object size
-    if config.object_size == head_obj.get_content_length():
-        logger.info("Content-Length matched!")
-        logger.info("S3AsyncHeadObject test passed!")
-    else:
-        logger.error("Error : Content-Length mismatched")
-        logger.info("S3AsyncHeadObject test failed!")
+    obj_data_generator = MultipartObjectDataGenerator(logger, config.object_size,
+                                                              config.part_number)
 
+    data = obj_data_generator.fetch()
+
+    obj = S3AsyncUploadPart(session, request_id,
+                                bucket_name, object_name, 
+                                config.part_number, upload_id)
+    async for _ in data:
+        for item in _:
+            print("item{}".format(item["part_no"]))
+            await obj.upload(item)
+
+    print("***Dict{}***".format(obj.get_etag_dict()))
     await session.close()
 
 loop = asyncio.get_event_loop()

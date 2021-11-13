@@ -18,6 +18,7 @@
 #
 import aiohttp
 import sys
+import urllib
 from s3replicationcommon.s3_common import S3RequestState
 from s3replicationcommon.timer import Timer
 from s3replicationcommon.aws_v4_signer import AWSV4Signer
@@ -26,7 +27,8 @@ from s3replicationcommon.log import fmt_reqid_log
 
 class S3AsyncHeadObject:
     def __init__(self, session, request_id,
-                 bucket_name, object_name):
+                 bucket_name, object_name,
+                 part_number, version_id):
         """Initialise."""
         self._session = session
         # Request id for better logging.
@@ -35,6 +37,9 @@ class S3AsyncHeadObject:
 
         self._bucket_name = bucket_name
         self._object_name = object_name
+
+        self._part_number = part_number
+        self._version_id = version_id
 
         self.remote_down = False
         self._http_status = None
@@ -405,7 +410,7 @@ class S3AsyncHeadObject:
         request_uri = AWSV4Signer.fmt_s3_request_uri(
             self._bucket_name, self._object_name)
 
-        query_params = ""
+        query_params = urllib.parse.urlencode({'partNumber': None, 'versionId': None})
         body = ""
         headers = AWSV4Signer(
             self._session.endpoint,
@@ -434,7 +439,7 @@ class S3AsyncHeadObject:
         try:
             async with self._session.get_client_session().head(
                     self._session.endpoint + request_uri,
-                    headers=headers) as resp:
+                    params=query_params, headers=headers) as resp:
 
                 if resp.status == 200:
                     self._response_headers = dict(resp.headers)

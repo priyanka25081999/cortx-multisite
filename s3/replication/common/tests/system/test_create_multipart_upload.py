@@ -23,7 +23,7 @@ import os
 import sys
 from config import Config
 from s3replicationcommon.log import setup_logger
-from s3replicationcommon.s3_head_object import S3AsyncHeadObject
+from s3replicationcommon.s3_create_multipart_upload import S3AsyncCreateMultipartUpload
 from s3replicationcommon.s3_site import S3Site
 from s3replicationcommon.s3_session import S3Session
 
@@ -50,18 +50,22 @@ async def main():
     bucket_name = config.source_bucket_name
     request_id = "dummy-request-id"
 
-    head_obj = S3AsyncHeadObject(session, request_id,
-                                 bucket_name, object_name,
-                                 None, None)
-    await head_obj.get()
+    obj = S3AsyncCreateMultipartUpload(session, request_id,
+                                            bucket_name,
+                                            object_name)
+    await obj.create()
+    #print("Upload ID {} ".format(obj.get_response_header("UploadId")))
 
-    # Validate if content length matches to object size
-    if config.object_size == head_obj.get_content_length():
-        logger.info("Content-Length matched!")
-        logger.info("S3AsyncHeadObject test passed!")
+    if obj.get_response_header("UploadId") != None:
+        logger.info("Upload ID {} ".format(obj.get_response_header("UploadId")))
+        logger.info("S3AsyncCreateMultipartUpload test passed!")
     else:
-        logger.error("Error : Content-Length mismatched")
-        logger.info("S3AsyncHeadObject test failed!")
+        logger.info("S3AsyncCreateMultipartUpload test failed!")
+    #     logger.info("Content-Length matched!")
+    #     logger.info("S3AsyncHeadObject test passed!")
+    # else:
+    #     logger.error("Error : Content-Length mismatched")
+    #     logger.info("S3AsyncHeadObject test failed!")
 
     await session.close()
 

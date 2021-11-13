@@ -224,7 +224,7 @@ class AWSV4Signer(object):
         epoch_t = datetime.datetime.utcnow()
         headers = {'content-type': 'application/x-www-form-urlencoded',
                    'Accept': 'text/plain'}
-
+        #headers = {'content-type': 'application/json','Accept': 'text/plain'}
         # Add range header field in request headers
         if read_range is not None:
             headers['Range'] = read_range
