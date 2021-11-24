@@ -84,6 +84,7 @@ class S3AsyncGetObject:
             end_bytes = self._range_read_offset + self._range_read_length
             object_range = "bytes=" + str(start_bytes) + "-" + str(end_bytes)
             total_to_fetch = (end_bytes - start_bytes) + 1
+            self._logger.info("Range formed : {}".format(object_range))
         else:
             # get object
             object_range = None
@@ -109,7 +110,7 @@ class S3AsyncGetObject:
         self._logger.info(fmt_reqid_log(self._request_id) +
                           'GET on {}'.format(
                               self._session.endpoint + request_uri))
-        self._logger.debug(fmt_reqid_log(self._request_id) +
+        self._logger.info(fmt_reqid_log(self._request_id) +
                            "GET with headers {}".format(headers))
         self._timer.start()
         try:

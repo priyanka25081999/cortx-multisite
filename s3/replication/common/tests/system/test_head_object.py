@@ -52,7 +52,7 @@ async def main():
 
     head_obj = S3AsyncHeadObject(session, request_id,
                                  bucket_name, object_name,
-                                 None, None)
+                                 None)
     await head_obj.get()
 
     # Validate if content length matches to object size

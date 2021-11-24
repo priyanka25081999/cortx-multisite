@@ -28,7 +28,7 @@ from s3replicationcommon.timer import Timer
 class S3AsyncUploadPart:
     def __init__(self, session, request_id,
                  bucket_name, object_name, 
-                 part_number, upload_id):
+                 upload_id):
         """Initialise."""
         self._session = session
         # Request id for better logging.
@@ -38,7 +38,6 @@ class S3AsyncUploadPart:
         self._bucket_name = bucket_name
         self._object_name = object_name
 
-        self._part_number = part_number
         self._upload_id = upload_id
 
         self.remote_down = False
@@ -71,13 +70,14 @@ class S3AsyncUploadPart:
         return self._etag_dict
 
     # data_reader is object with fetch method that can yield data
-    async def upload(self, item):
+    # we can pass get-object/data reader and part number
+    async def upload(self, data_reader, part_no, chunk_size):
         self._state = S3RequestState.RUNNING
 
         request_uri = AWSV4Signer.fmt_s3_request_uri(
             self._bucket_name, self._object_name)
         
-        self._part_no = item["part_no"]
+        self._part_no = part_no
         print("***part_no{} upload id{}".format(self._part_no, self._upload_id))
         query_params = urllib.parse.urlencode({'partNumber': self._part_no, 'uploadId': self._upload_id})
         body = ""
@@ -98,20 +98,21 @@ class S3AsyncUploadPart:
                                "Failed to generate v4 signature")
             sys.exit(-1)
 
-        #headers["Content-Length"] = str(self._object_size)
+        headers["Content-Length"] = str(chunk_size)
 
         self._logger.info(fmt_reqid_log(self._request_id) +
                           "PUT on {}".format(
                               self._session.endpoint + request_uri))
-        self._logger.debug(fmt_reqid_log(self._request_id) +
+        self._logger.info(fmt_reqid_log(self._request_id) +
                            "PUT with headers {}".format(headers))
+        
         self._timer.start()
         try:
             async with self._session.get_client_session().put(
                     self._session.endpoint + request_uri,
                     headers=headers,
                     params=query_params,
-                    data=item["data"]) as resp:
+                    data=data_reader.fetch(chunk_size)) as resp:
                 self._timer.stop()
 
                 self._http_status = resp.status

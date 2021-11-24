@@ -34,27 +34,34 @@ class MultipartObjectDataGenerator:
     def get_state(self):
         """Returns current request state."""
         return self._state
-
-    async def fetch(self):
+    
+    async def fetch(self, total_chunks):
         self._state = S3RequestState.RUNNING
-        
-        total_chunks = int(self.object_size / self.part_number)
-        start_chunk_size = 0
-        part_no = 1
-        all_objects = []
-        print("Total chunks {}".format(total_chunks))
-        
-        while start_chunk_size < self.object_size:
-            local_data = None
-            local_data = urandom(total_chunks)
-
-            local_dict = {}
-            all_objects.append({"part_no":part_no, "data":local_data})
-            local_dict.clear()
-
-            start_chunk_size+=total_chunks
-            local_data = None
-            part_no+=1
-
+        #total_chunks = int(self.object_size / self.part_number)
+        local_data = urandom(total_chunks)
         self._state = S3RequestState.COMPLETED
-        yield all_objects
+        yield local_data
+
+    # async def fetch(self):
+    #     self._state = S3RequestState.RUNNING
+        
+    #     total_chunks = int(self.object_size / self.part_number)
+    #     start_chunk_size = 0
+    #     part_no = 1
+    #     all_objects = []
+    #     print("Total chunks {}".format(total_chunks))
+        
+    #     while start_chunk_size < self.object_size:
+    #         local_data = None
+    #         local_data = urandom(total_chunks)
+
+    #         local_dict = {}
+    #         all_objects.append({"part_no":part_no, "data":local_data})
+    #         local_dict.clear()
+
+    #         start_chunk_size+=total_chunks
+    #         local_data = None
+    #         part_no+=1
+
+    #     self._state = S3RequestState.COMPLETED
+    #     yield all_objects

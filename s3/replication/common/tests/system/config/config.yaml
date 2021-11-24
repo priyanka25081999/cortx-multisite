@@ -4,7 +4,7 @@ s3_service_name: cortxs3 # Change to s3 to test against amazon
 s3_region: us-west2 # User should update region in case of aws
 source_bucket_name: tag-sourcebucket # User should makesure that
 target_bucket_name: ps-targetbucket # Buckets does exist on server
-object_name_prefix: demo162
+object_name_prefix: demo171
 object_tag_name: user-tag
 object_tag_value: user-tag-value
 range_read_offset: -1

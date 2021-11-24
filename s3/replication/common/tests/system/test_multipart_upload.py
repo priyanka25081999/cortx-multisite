@@ -68,17 +68,21 @@ async def main():
     obj_data_generator = MultipartObjectDataGenerator(logger, config.object_size,
                                                               config.part_number)
 
-    data = obj_data_generator.fetch()
+    #data = obj_data_generator.fetch()
     
     # call to upload part 
     obj_upload = S3AsyncUploadPart(session, request_id,
                                         config.source_bucket_name,
-                                        source_object_name, upload_id,
-                                        config.part_number)
-    async for _ in data:
-        for item in _:
-            print("item{}".format(item["part_no"]))
-            await obj_upload.upload(item)   # here pass get-range read class object
+                                        source_object_name, upload_id)
+    # async for _ in data:
+    #     for item in _:
+    #         print("item{}".format(item["part_no"]))
+    #         await obj_upload.upload(item)   # here pass get-range read class object
+
+    total_chunks = int(config.object_size / config.part_number)
+    print("Total chunks {}".format(total_chunks))
+    for i in range(1, int(config.part_number+1)):
+        await obj_upload.upload(obj_data_generator, i, total_chunks) 
 
     print("***Dict{}***".format(obj_upload.get_etag_dict()))
     # this will return dict {'Part-Number': '', 'ETag': ''}

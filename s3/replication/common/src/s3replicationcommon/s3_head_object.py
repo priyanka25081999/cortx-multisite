@@ -28,7 +28,7 @@ from s3replicationcommon.log import fmt_reqid_log
 class S3AsyncHeadObject:
     def __init__(self, session, request_id,
                  bucket_name, object_name,
-                 part_number, version_id):
+                 version_id):
         """Initialise."""
         self._session = session
         # Request id for better logging.
@@ -38,7 +38,6 @@ class S3AsyncHeadObject:
         self._bucket_name = bucket_name
         self._object_name = object_name
 
-        self._part_number = part_number
         self._version_id = version_id
 
         self.remote_down = False
@@ -406,11 +405,11 @@ class S3AsyncHeadObject:
         """Return total time for HEAD Object operation."""
         return self._timer.elapsed_time_ms()
 
-    async def get(self):
+    async def get(self, part_number):
         request_uri = AWSV4Signer.fmt_s3_request_uri(
             self._bucket_name, self._object_name)
 
-        query_params = urllib.parse.urlencode({'partNumber': None, 'versionId': None})
+        query_params = urllib.parse.urlencode({'partNumber': part_number, 'versionId': None})
         body = ""
         headers = AWSV4Signer(
             self._session.endpoint,

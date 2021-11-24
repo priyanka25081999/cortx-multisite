@@ -51,20 +51,26 @@ async def main():
     bucket_name = config.source_bucket_name
     request_id = "dummy-request-id"
 
-    upload_id = "9091df60-7e67-4e50-b2b6-7bdcf6e949a4"
+    upload_id = "ddd865ee-aadb-4cea-b331-6fdf63b9c81b"
 
     obj_data_generator = MultipartObjectDataGenerator(logger, config.object_size,
                                                               config.part_number)
 
-    data = obj_data_generator.fetch()
+    #data = obj_data_generator.fetch()
 
     obj = S3AsyncUploadPart(session, request_id,
                                 bucket_name, object_name, 
-                                config.part_number, upload_id)
-    async for _ in data:
-        for item in _:
-            print("item{}".format(item["part_no"]))
-            await obj.upload(item)
+                                upload_id)
+
+    total_chunks = int(config.object_size / config.part_number)
+    print("Total chunks {}".format(total_chunks))
+    for i in range(1, int(config.part_number+1)):
+        await obj.upload(obj_data_generator, i, total_chunks)  # Part_no, data_reader object, total chunks
+
+    # async for _ in data:
+    #     for item in _:
+    #         print("item{}".format(item["part_no"]))
+    #         await obj.upload(item)
 
     print("***Dict{}***".format(obj.get_etag_dict()))
     await session.close()
