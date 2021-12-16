@@ -21,7 +21,7 @@ import asyncio
 import logging
 from enum import Enum
 from .replicator_client import ReplicatorClient
-
+#from s3replicationmanager.kafka_main import KafkaMain
 
 _logger = logging.getLogger("s3replicationmanager")
 
@@ -51,6 +51,12 @@ class JobDistributor:
         _logger.info("Job distributor loop started...")
         subscribers_list = self._app['subscribers']
         jobs_list = self._app['all_jobs']
+
+ #       obj = KafkaMain()
+  #      await obj.start()
+   #     obj1 = obj.fetch_jobs()
+    #    async for _ in obj1:
+     #      pass
         while self._state == DistributorState.RUNNING:
             # Wait for next interval.
             await asyncio.sleep(self._polling_interval)

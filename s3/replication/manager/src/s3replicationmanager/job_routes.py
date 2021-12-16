@@ -16,7 +16,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
+from ast import literal_eval
 from aiohttp import web
 import logging
 import json
@@ -35,9 +35,12 @@ routes = web.RouteTableDef()
 async def add_job(request):
     """Handler to add job to job queue."""
     fdmi_job = await request.json()
-    _logger.debug('API: POST /jobs\nContent : {}'.format(fdmi_job))
+    #fdmi_job = json.dumps(fdmi_job)
+    fdmi_dict = literal_eval(fdmi_job)
+    _logger.debug('API: POST /jobs\nContent : {}'.format(fdmi_dict))
+    _logger.debug('*****Type***** : {}'.format(type(fdmi_dict)))
 
-    job_record = PrepareReplicationJob.from_fdmi(fdmi_job)
+    job_record = PrepareReplicationJob.from_fdmi(fdmi_dict)
 
     if job_record is None:
         return web.json_response(

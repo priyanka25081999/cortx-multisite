@@ -27,12 +27,18 @@ from .job_routes import routes as job_routes
 from .subscriber_routes import routes as subscriber_routes
 from s3replicationcommon.jobs import Jobs
 from .subscribers import Subscribers
+from s3replicationmanager.kafka_demo_io import KafkaMain
 
 _logger = logging.getLogger("s3replicationmanager")
 
 
 async def on_startup(app):
     _logger.debug("Starting server...")
+    kaf_obj = KafkaMain(app)
+    #loop = asyncio.get_event_loop()
+    #loop.run_until_complete(kaf_obj.consume())
+    #await kaf_obj.consume()
+    task = asyncio.ensure_future(kaf_obj.consume())
 
     distributor = JobDistributor(app)
     app["job_distributor"] = distributor
@@ -41,6 +47,8 @@ async def on_startup(app):
 
 async def on_shutdown(app):
     _logger.debug("Performing cleanup on shutdown...")
+    #kaf_obj = KafkaMain()  
+    #kaf_obj.stop()
     app["job_distributor"].stop()
     await app['subscribers'].close()
 
@@ -65,6 +73,7 @@ class ReplicationManagerApp:
         self._subscribers = Subscribers()
 
     def run(self):
+        print("in run app")
         app = web.Application()
 
         # Setup the global context store.
@@ -85,6 +94,6 @@ class ReplicationManagerApp:
         # Setup startup/shutdown handlers
         app.on_startup.append(on_startup)
         app.on_shutdown.append(on_shutdown)
-
+        print("Starting server")
         # Start the REST server.
         web.run_app(app, host=self._config.host, port=self._config.port)
