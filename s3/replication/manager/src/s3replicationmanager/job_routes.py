@@ -16,20 +16,20 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+import json
+import logging
 from ast import literal_eval
 from aiohttp import web
-import logging
-import json
 from urllib.parse import urlparse, parse_qs
 from s3replicationcommon.job import JobJsonEncoder
 from s3replicationcommon.jobs import Jobs
 from .prepare_job import PrepareReplicationJob
+from .kafka_consumer import KafkaMain
 
 _logger = logging.getLogger('s3replicationmanager')
 
 # Route table declaration
 routes = web.RouteTableDef()
-
 
 @routes.post('/jobs')  # noqa: E302
 async def add_job(request):
@@ -99,6 +99,10 @@ async def update_job_attr(request):
 
         if job_record["status"] == "completed":
             job.mark_completed()
+            print("Job id here : {}".format(job_id))
+            kafka_obj = KafkaMain()
+            await kafka_obj.commit_job(job_id)
+
         elif job_record["status"] == "failed":
             job.mark_failed()
         elif job_record["status"] == "aborted":

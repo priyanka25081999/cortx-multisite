@@ -16,25 +16,27 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-from aiohttp import web
+
 import asyncio
 import logging
 import sys
+from aiohttp import web
 from .config import Config
 from .distributor import JobDistributor
-from s3replicationcommon.log import setup_logger
 from .job_routes import routes as job_routes
 from .subscriber_routes import routes as subscriber_routes
-from s3replicationcommon.jobs import Jobs
 from .subscribers import Subscribers
-from s3replicationmanager.kafka_demo_io import KafkaMain
+from s3replicationmanager.kafka_consumer import KafkaMain
+from s3replicationcommon.jobs import Jobs
+from s3replicationcommon.log import setup_logger
 
 _logger = logging.getLogger("s3replicationmanager")
 
 
 async def on_startup(app):
     _logger.debug("Starting server...")
-    kaf_obj = KafkaMain(app)
+    kaf_obj = KafkaMain()
+    kaf_obj.initialize(app)
     #loop = asyncio.get_event_loop()
     #loop.run_until_complete(kaf_obj.consume())
     #await kaf_obj.consume()
@@ -73,7 +75,6 @@ class ReplicationManagerApp:
         self._subscribers = Subscribers()
 
     def run(self):
-        print("in run app")
         app = web.Application()
 
         # Setup the global context store.
@@ -94,6 +95,6 @@ class ReplicationManagerApp:
         # Setup startup/shutdown handlers
         app.on_startup.append(on_startup)
         app.on_shutdown.append(on_shutdown)
-        print("Starting server")
+
         # Start the REST server.
         web.run_app(app, host=self._config.host, port=self._config.port)
